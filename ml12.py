@@ -9,7 +9,7 @@ import math
 import csv
 import random
 
-def open_csv_file(file_name): # 1 label + 784 pixels; 60000 images
+def open_csv_file(file_name): # 1 label + 784 pixels; 256/60000 images
     matrix = []
     with open(file_name, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter='\t')
