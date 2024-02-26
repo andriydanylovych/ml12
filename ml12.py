@@ -3,7 +3,6 @@
 
 # In[367]:
 
-
 import numpy
 import math
 import csv
