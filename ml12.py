@@ -91,8 +91,6 @@ def main() -> None:
     ##### ITERATE(5) | LOOP TRAIN_BASE IMAGES(256|60000)
 
     ETA: float = 1.
-    ETA_UP: float = 1.4
-    ETA_DOWN: float = 0.6
     NUMBER_LABELS: int = 10 # NN[len(NN) - 1]
     OUTPUT_LAYER: int = 2 # len(NN) - 2
     NUMBER_RECORDS: int = 256 # len(train_float) 256|60000 (record=image)
@@ -140,7 +138,7 @@ def main() -> None:
             copy_iteration(bb, bb2)
             copy_iteration(delta, delta2)
             copy_iteration(dcdw, dcdw2)
-            ETA *= ETA_UP
+            ETA *= 2.
             cost_previous = cost
         else:
             print("--- cost(", iteration, ") = ", cost, " ETA = ", ETA)
@@ -148,7 +146,7 @@ def main() -> None:
             copy_iteration(bb2, bb)
             copy_iteration(delta2, delta)
             copy_iteration(dcdw2, dcdw)
-            ETA *= ETA_DOWN
+            ETA /= 2.
         if (iteration < ITERATIONS - 1):
             for n in range (len(NN) - 1): # n = 0, 1, 2
                 ww[n] = ww[n] - dcdw[n] * ETA
