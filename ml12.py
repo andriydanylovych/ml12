@@ -98,7 +98,7 @@ def main() -> None:
     NUMBER_RECORDS: int = 256 # len(train_float) 256|60000 (record=image)
     ITERATIONS: int = 99
 
-    cost_previos: float = 9.9
+    cost_previous: float = 9.9
 
     for iteration in range (ITERATIONS):
 
@@ -134,14 +134,14 @@ def main() -> None:
 
         cost /= float(NUMBER_RECORDS)
 
-        if (cost <= u):
+        if (cost <= cost_previous):
             print("cost(", iteration, ") = ", cost, " ETA = ", ETA)
             copy_iteration(ww, ww2)
             copy_iteration(bb, bb2)
             copy_iteration(delta, delta2)
             copy_iteration(dcdw, dcdw2)
             ETA *= ETA_UP
-            u = cost
+            cost_previous = cost
         else:
             print("--- cost(", iteration, ") = ", cost, " ETA = ", ETA)
             copy_iteration(ww2, ww)
