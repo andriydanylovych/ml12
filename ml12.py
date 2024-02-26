@@ -37,6 +37,13 @@ def random_weights_biases(NN):
         dim += (NN[d] + 1) # weights + biases
     return [[(random.random() * 2. - 1.) for col in range(dim)] for row in range(NN[1])]
 
+def sigmoid(a, w, b):
+    return (1. / (1. + math.exp(- numpy.dot(a, w) - b)))
+
+def copy_iteration(m, m2) -> None:
+    for n in range (len(m)): # n = 0, 1, 2
+        m2[n][:] = m[n]
+    
 def main() -> None:
     NN = [784, 16, 16, 10] # set neural network dimensions, 784 will be overwritten
     READ_WEIGHTS_BIASES: bool = True
@@ -89,7 +96,7 @@ def main() -> None:
     NUMBER_LABELS: int = 10 # NN[len(NN) - 1]
     OUTPUT_LAYER: int = 2 # len(NN) - 2
     NUMBER_RECORDS: int = 256 # len(train_float) 256|60000 (record=image)
-    ITERATIONS: int = 999
+    ITERATIONS: int = 99
 
     cost_previos: float = 9.9
 
@@ -103,15 +110,15 @@ def main() -> None:
             target_vector[int(train_base[record][0])] = 1 # train_base[record][0] --> assigned label
 
             for i in range (NN[1]): # compute activations of the first layer
-                aa[0][i] = 1. / (1. + math.exp(- numpy.dot(train_float[record], ww[0][i]) - bb[0][i]))
-
+                aa[0][i] = sigmoid(train_float[record], ww[0][i], bb[0][i])
+                
             for n in range (1, len(NN) - 1): # compute activations of the layers 1 and 2
                 for i in range (NN[n + 1]):
-                    aa[n][i] = 1. / (1. + math.exp(- numpy.dot(aa[n - 1], ww[n][i]) - bb[n][i]))
-
-            for i in range (NUMBER_LABELS): # compute cost
-                cost += (aa[OUTPUT_LAYER][i] - target_vector[i]) ** 2
-
+                    aa[n][i] = sigmoid(aa[n - 1], ww[n][i], bb[n][i])
+                    
+            diff = aa[OUTPUT_LAYER] - target_vector
+            cost += numpy.dot(diff, diff)
+            
             for i in range (NUMBER_LABELS): # compute delta for output layer
                 delta[OUTPUT_LAYER][i] = 2 * (aa[OUTPUT_LAYER][i] - target_vector[i]) * aa[OUTPUT_LAYER][i] * (1 - aa[OUTPUT_LAYER][i])
 
@@ -127,27 +134,25 @@ def main() -> None:
 
         cost /= float(NUMBER_RECORDS)
 
-        if (cost <= cost_previos):
+        if (cost <= u):
             print("cost(", iteration, ") = ", cost, " ETA = ", ETA)
-            for n in range (len(NN) - 1): # n = 0, 1, 2
-                ww2[n][:] = ww[n]
-                bb2[n][:] = bb[n]
-                delta2[n][:] = delta[n]
-                dcdw2[n][:] = dcdw[n]
+            copy_iteration(ww, ww2)
+            copy_iteration(bb, bb2)
+            copy_iteration(delta, delta2)
+            copy_iteration(dcdw, dcdw2)
             ETA *= ETA_UP
-            cost_previos = cost
+            u = cost
         else:
             print("--- cost(", iteration, ") = ", cost, " ETA = ", ETA)
-            for n in range (len(NN) - 1): # n = 0, 1, 2
-                ww[n][:] = ww2[n]
-                bb[n][:] = bb2[n]
-                delta[n][:] = delta2[n]
-                dcdw[n][:] = dcdw2[n]
+            copy_iteration(ww2, ww)
+            copy_iteration(bb2, bb)
+            copy_iteration(delta2, delta)
+            copy_iteration(dcdw2, dcdw)
             ETA *= ETA_DOWN
         if (iteration < ITERATIONS - 1):
             for n in range (len(NN) - 1): # n = 0, 1, 2
-                ww[n] = ww[n] - dcdw[n] * ETA / float(NUMBER_RECORDS)
-                bb[n] = bb[n] - delta[n] * ETA / float(NUMBER_RECORDS)
+                ww[n] = ww[n] - dcdw[n] * ETA
+                bb[n] = bb[n] - delta[n] * ETA
                 dcdw[n].fill(0)
         # End of ITERATIONS LOOP
 
