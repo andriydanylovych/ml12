@@ -17,8 +17,8 @@ def open_csv_file(file_name): # 1 label + 784 pixels; 256/60000 images
     return matrix
 
 def normalize_pixels(matrix_int):
-    MAX_PX_VALUE: float = 255. # Max pixel value
-    train_float = numpy.zeros((len(matrix_int), len(matrix_int[0])))
+    MAX_PX_VALUE: float = 256. # Max pixel value
+    train_float = numpy.zeros((len(matrix_int), len(matrix_int[0]) - 1))
     for item in range (len(matrix_int)):
         for pixel in range (len(matrix_int[0]) - 1):
             train_float[item][pixel] = float(matrix_int[item][pixel + 1]) / MAX_PX_VALUE
@@ -37,7 +37,11 @@ def random_weights_biases(NN):
     return [[(random.random() * 2. - 1.) for col in range(dim)] for row in range(NN[1])]
 
 def sigmoid(a, w, b):
-    return (1. / (1. + math.exp(- numpy.dot(a, w) - b)))
+    z = numpy.dot(a, w) + b
+    if (z < -20):
+        return 0.
+    else:
+        return (1. / (1. + math.exp(-z)))
 
 def copy_iteration(m, m2) -> None:
     for n in range (len(m)): # n = 0, 1, 2
@@ -59,10 +63,10 @@ def main() -> None:
 
     # To carve out ww[] and bb[] from weights_biases[].
     ww, bb = [], [] # weights, biases
+    col_b = 0
     for n in range (len(NN) - 1): # n = 0, 1, 2
         ww.append(numpy.zeros((NN[n + 1], NN[n])))
         bb.append(numpy.zeros(NN[n + 1]))
-        col_b = 0
         if (n > 0):
             col_b += (NN[n - 1] + 1)
         for row in range(NN[n + 1]):
@@ -117,7 +121,7 @@ def main() -> None:
             cost += numpy.dot(diff, diff)
             
             for i in range (NUMBER_LABELS): # compute delta for output layer
-                delta[OUTPUT_LAYER][i] = 2 * (aa[OUTPUT_LAYER][i] - target_vector[i]) * aa[OUTPUT_LAYER][i] * (1 - aa[OUTPUT_LAYER][i])
+                delta[OUTPUT_LAYER][i] = 2 * (target_vector[i] - aa[OUTPUT_LAYER][i]) * aa[OUTPUT_LAYER][i] * (1 - aa[OUTPUT_LAYER][i])
 
             for n in range (OUTPUT_LAYER - 1, -1, -1): # compute delta for layers n = 1, 0
                 ww_transpose = numpy.transpose(ww[n + 1])
@@ -148,14 +152,14 @@ def main() -> None:
             ETA /= 2.
         if (iteration < ITERATIONS - 1):
             for n in range (len(NN) - 1): # n = 0, 1, 2
-                ww[n] = ww[n] - dcdw[n] * ETA
-                bb[n] = bb[n] - delta[n] * ETA
+                ww[n] = ww[n] + dcdw[n] * ETA
+                bb[n] = bb[n] + delta[n] * ETA
                 dcdw[n].fill(0)
         # End of ITERATIONS LOOP
 
     # To build and download (overwrite, if exists) final weights_biases[]
+    col_b = 0
     for n in range (len(NN) - 1): # n = 0, 1, 2
-        col_b = 0
         if (n > 0):
             col_b += (NN[n - 1] + 1)
         for row in range(NN[n + 1]):
